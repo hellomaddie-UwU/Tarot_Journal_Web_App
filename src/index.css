@@ -7,10 +7,17 @@
   --color-bg: #ffffff;
   --color-surface: #f5f5f5;
   --color-border: #e0e0e0;
-  --color-text-primary: #111111;
-  --color-text-secondary: #555555;
+  --color-text-primary: #1F235B;
+  --color-text-secondary: #6172f3;
+  --color-text-body: #717680;
   --color-text-muted: #999999;
-  --color-accent: #111111;
+  --color-accent: #6172f3;
+
+  --indigo-900: #2D3282;
+
+  --grayblue-800: #293056;
+  --grayblue-700: #363F72;
+  --grayblue-600: #3E4784;;
 
   /* Typography */
   --font-base: 'Poppins', sans-serif;
@@ -28,4 +35,37 @@
 body {
   background-color: var(--color-bg);
   color: var(--color-text-primary);
+}
+
+/*Containers*/
+  .top-section-container {padding: 20px 8% 40px 8%;}
+  .section-container {padding: 40px 8%;}
+
+/*Typography*/
+h1, h2, h3, h4, h5, h6 {color: var(--color-text-primary);}
+
+h4 {
+  font-size: 31px;
+  font-weight: 600;
+  line-height: 36px;
+}
+
+h6 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  color: var(--grayblue-600);
+}
+
+P {
+  color: var(--color-text-body);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+
+.md-text {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 23px;
 }

@@ -1,11 +1,22 @@
 function DesignSystem() {
   return (
-    <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '8px' }}>Design System</h1>
-      <p style={{ color: 'var(--color-text-muted)', marginBottom: '48px' }}>
-        Reading with Sumi — visual reference
-      </p>
+    <div>
+      <div className="top-section-container">
+        <h4 className="mb-2">Design System</h4>
+        <p>Reading with Sumi - Visual Reference</p>
+      </div>
+      <div className="section-container">
+        <h6 className="mb-2">Branding</h6>
+        <p className="md-text">LOGO</p>
+        <p>still in progress</p>
+      </div>
+      <div className="section-container">
+        <h6>Components</h6>
 
+      </div>
+
+
+      //generated code
       {/* Colors */}
       <section style={{ marginBottom: '48px' }}>
         <h2 style={{ marginBottom: '16px' }}>Colors</h2>

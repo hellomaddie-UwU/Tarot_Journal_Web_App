@@ -33,6 +33,7 @@ const PALETTE = [
   { name: 'Secondary',    varName: '--color-secondary',    hex: '#5B6FA8' },
   { name: 'Accent',       varName: '--color-accent',       hex: '#7B5EA7' },
   { name: 'Background',   varName: '--color-background',   hex: '#F4F2FA' },
+  { name: 'Background Light',   varName: '--color-background-light',   hex: '#FCFAFF' },
   { name: 'Surface',      varName: '--color-surface',      hex: '#FFFFFF' },
   { name: 'Text Primary', varName: '--color-text-primary', hex: '#1A1535' },
   { name: 'Text Muted',   varName: '--color-text-muted',   hex: '#8A87A8' },

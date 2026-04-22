@@ -9,6 +9,7 @@
   --color-primary:        #3B2F6B;
   --color-secondary:      #5B6FA8;
   --color-background:     #F4F2FA;
+  --color-background-light: #fcfaff;
   --color-surface:        #FFFFFF;
   --color-text-primary:   #1A1535;
   --color-text-muted:     #8A87A8;
@@ -128,8 +129,9 @@ p { font-size: var(--text-base); line-height: var(--lh-normal); color: var(--col
 .text-caption  { font-size: var(--text-sm);  line-height: var(--lh-normal); color: var(--color-text-muted); }
 .text-overline { font-size: var(--text-xs); font-weight: var(--fw-semibold); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); }
 code, .inline-code {
-  font-family:   var(--font-mono);
+  font-family:   var(--font-sans);
   font-size:     0.875em;
+  font-weight: var(--fw-medium);
   background:    var(--color-code-bg);
   color:         var(--color-accent);
   padding:       0.1em 0.45em;
@@ -470,7 +472,7 @@ code, .inline-code {
    border-bottom: none; 
 }
 .token-table code { 
-   font-size: var(--text-xs); 
+   font-size: var(--text-sm); 
 }
 .radius-demo { 
    display: flex; 
@@ -514,9 +516,10 @@ code, .inline-code {
    color: var(--color-accent); 
 }
 .ds-version { 
-   font-size: var(--text-xs); 
+   font-size: var(--text-sm); 
+   font-weight: var(--fw-semibold);
    font-family: var(--font-mono); 
-   color: var(--color-text-muted); 
+   color: var(--color-secondary); 
    background: var(--color-code-bg); 
    padding: 0.2em 0.6em; 
    border-radius: var(--radius-sm); 
@@ -787,8 +790,8 @@ select.input-ds {
    vertical-align: middle; 
 }
 .table-ds tbody tr:last-child td { border-bottom: none; }
-.table-ds tbody tr:hover td { background: var(--color-background); }
-.table-ds.table-striped tbody tr:nth-child(even) td { background: var(--color-background); }
+.table-ds tbody tr:hover td { background: var(--color-background-light); }
+.table-ds.table-striped tbody tr:nth-child(even) td { background: var(--color-background-light); }
 .table-ds.table-striped tbody tr:nth-child(even):hover td { background: var(--color-code-bg); }
 .table-ds.table-bordered, .table-ds.table-bordered thead th, .table-ds.table-bordered tbody td { border: 1px solid var(--color-border); }
 
@@ -891,8 +894,8 @@ select.input-ds {
    font-size: var(--text-xs); 
 }
 .breadcrumb-ds .current { 
-   color: var(--color-text-primary); 
-   font-weight: var(--fw-medium); 
+   color: var(--color-accent); 
+   font-weight: var(--fw-semibold); 
    pointer-events: none;
 }
 

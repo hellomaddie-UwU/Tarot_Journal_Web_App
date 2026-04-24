@@ -15,6 +15,54 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null
 
+function ensureSupabaseClient() {
+  if (!supabase) {
+    throw new Error(
+      'Supabase auth is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.',
+    )
+  }
+
+  return supabase
+}
+
+export function getAuthRedirectUrl(path = '/sign-in') {
+  if (typeof window === 'undefined') {
+    return undefined
+  }
+
+  return new URL(path, window.location.origin).toString()
+}
+
+export function signInWithGoogle() {
+  return ensureSupabaseClient().auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: getAuthRedirectUrl(),
+    },
+  })
+}
+
+export function signUpWithEmail({ email, password }) {
+  return ensureSupabaseClient().auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: getAuthRedirectUrl(),
+    },
+  })
+}
+
+export function signInWithEmail({ email, password }) {
+  return ensureSupabaseClient().auth.signInWithPassword({
+    email,
+    password,
+  })
+}
+
+export function signOut() {
+  return ensureSupabaseClient().auth.signOut()
+}
+
 export async function verifySupabaseConnection() {
   if (!isSupabaseConfigured) {
     return {

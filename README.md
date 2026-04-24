@@ -1,16 +1,47 @@
-# React + Vite
+# Tarot Journal Web App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tarot Journal is a React + Vite web application for tracking card pulls and guided reflections.
 
-Currently, two official plugins are available:
+## Local Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Install dependencies:
 
-## React Compiler
+```bash
+npm install
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. Create local environment variables from the example file:
 
-## Expanding the ESLint configuration
+```bash
+cp .env.example .env
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. In `.env`, add your Supabase project values:
+
+```bash
+VITE_SUPABASE_URL=https://mktgjrmtomuezomljvxs.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_278rfbo_XxOP9G7nTiydUA_3nXnnsgN
+```
+
+4. Start the dev server:
+
+```bash
+npm run dev
+```
+
+## Supabase Integration
+
+- Supabase client: `src/lib/supabaseClient.js`
+- Environment variables: `.env` (local), `.env.example` (template)
+
+When running in development, the app performs a Supabase health check on startup and logs the result in the browser console:
+
+- `Supabase connection is healthy.` means the local connection is configured and reachable.
+- Warning messages indicate missing variables or a failed connection check.
+
+## Available Scripts
+
+- `npm run dev`: Start local development server
+- `npm run build`: Build production assets
+- `npm run preview`: Preview production build
+- `npm run lint`: Run ESLint

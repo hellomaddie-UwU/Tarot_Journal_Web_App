@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthSession } from '../hooks/useAuthSession'
 import { signOut, signUpWithEmail } from '../lib/supabaseClient'
 
@@ -10,6 +10,7 @@ const initialCredentials = {
 
 function SignUp() {
   const { errorMessage, isConfigured, isLoading, session, user } = useAuthSession()
+  const navigate = useNavigate()
   const [credentials, setCredentials] = useState(initialCredentials)
   const [feedback, setFeedback] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -42,11 +43,22 @@ function SignUp() {
 
   const handleEmailSignUp = async (event) => {
     event.preventDefault()
+    setIsSubmitting(true)
+    setFeedback('')
 
-    await runAuthAction(
-      () => signUpWithEmail(credentials),
-      'Account created request sent. If email confirmation is enabled, check your inbox.',
-    )
+    try {
+      const { error } = await signUpWithEmail(credentials)
+
+      if (error) {
+        throw error
+      }
+
+      navigate('/verify-otp', { state: { email: credentials.email } })
+    } catch (error) {
+      setFeedback(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleSignOut = () => {

@@ -63,6 +63,21 @@ export function signOut() {
   return ensureSupabaseClient().auth.signOut()
 }
 
+export function verifyEmailOtp({ email, token }) {
+  return ensureSupabaseClient().auth.verifyOtp({
+    email,
+    token,
+    type: 'signup',
+  })
+}
+
+export function resendConfirmationEmail({ email }) {
+  return ensureSupabaseClient().auth.resend({
+    type: 'signup',
+    email,
+  })
+}
+
 export async function verifySupabaseConnection() {
   if (!isSupabaseConfigured) {
     return {

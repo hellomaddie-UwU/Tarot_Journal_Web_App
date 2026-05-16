@@ -478,6 +478,68 @@ select.input-ds {
 .tooltip-bottom:hover .tooltip-ds { transform: translateX(-50%) translateY(0); }
 
 /* ─────────────────────────────────────────
+    15. JOURNAL EDITOR (RTE)
+───────────────────────────────────────── */
+.rte-ds {
+   border: 1.5px solid var(--color-border);
+   border-radius: var(--radius-md);
+   overflow: hidden;
+   background: var(--color-surface);
+   transition: var(--ease-base);
+}
+
+.rte-ds:focus-within {
+   border-color: var(--color-accent);
+   box-shadow: 0 0 0 3px rgba(123,94,167,0.15);
+}
+
+.rte-ds.error {
+   border-color: #cc3333;
+   box-shadow: 0 0 0 3px rgba(204,51,51,0.12);
+}
+
+.rte-ds .ql-toolbar.ql-snow {
+   border: none;
+   border-bottom: 1px solid var(--color-border);
+   background: var(--color-background-light);
+   padding: 0.5rem 0.65rem;
+}
+
+.rte-ds .ql-container.ql-snow {
+   border: none;
+   font-family: var(--font-sans);
+   font-size: var(--text-sm);
+   color: var(--color-text-primary);
+   min-height: 260px;
+}
+
+.rte-ds .ql-editor {
+   min-height: 260px;
+   line-height: var(--lh-normal);
+   padding: 0.85rem 1rem;
+}
+
+.rte-ds .ql-editor.ql-blank::before {
+   color: var(--color-text-muted);
+   font-style: normal;
+}
+
+.journal-image-panel {
+   border: 1px solid var(--color-border);
+   background: var(--color-background-light);
+   border-radius: var(--radius-md);
+   padding: var(--space-3);
+}
+
+.journal-image-preview {
+   width: 100%;
+   max-height: 260px;
+   object-fit: cover;
+   border-radius: var(--radius-sm);
+   border: 1px solid var(--color-border);
+}
+
+/* ─────────────────────────────────────────
    17. PROGRESS & STEP INDICATORS
 ───────────────────────────────────────── */
 .progress-ds-wrap { 
@@ -563,3 +625,48 @@ select.input-ds {
    text-align: center; }
 .step-ds.active .step-label   { color: var(--color-accent); }
 .step-ds.complete .step-label { color: var(--color-text-primary); }
+
+/* ─────────────────────────────────────────
+   18. CATALOGUE ENTRIES
+───────────────────────────────────────── */
+.catalogue-list {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-3);
+}
+
+.catalogue-entry {
+   transition: var(--ease-smooth);
+}
+
+.catalogue-prompt {
+   font-size: var(--text-sm);
+   color: var(--color-accent);
+   font-weight: var(--fw-medium);
+   line-height: var(--lh-normal);
+}
+
+.catalogue-preview {
+   font-size: var(--text-sm);
+   color: var(--color-text-primary);
+   line-height: var(--lh-normal);
+   display: -webkit-box;
+   -webkit-line-clamp: 4;
+   -webkit-box-orient: vertical;
+   overflow: hidden;
+}
+
+.catalogue-thumb {
+   width: 100%;
+   aspect-ratio: 4 / 3;
+   object-fit: cover;
+   border-radius: var(--radius-md);
+   border: 1px solid var(--color-border);
+   box-shadow: var(--shadow-xs);
+}
+
+@media (max-width: 767px) {
+   .catalogue-preview {
+      -webkit-line-clamp: 6;
+   }
+}

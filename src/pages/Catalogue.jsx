@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthSession } from '../hooks/useAuthSession'
 import { deleteJournalEntry, readJournalEntries } from '../hooks/useJournalStorage'
+import { stripHtml } from '../utils/stringUtils'
 
 function readEntries(userId) {
   if (!userId) return { entries: [], warning: '' }
@@ -14,14 +15,6 @@ function readEntries(userId) {
       warning: 'Saved entries could not be read from this browser storage right now.',
     }
   }
-}
-
-function stripHtml(html) {
-  return String(html ?? '')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
 }
 
 function formatSavedDate(isoString) {

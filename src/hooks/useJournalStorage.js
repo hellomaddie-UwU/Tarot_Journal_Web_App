@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { defaultFormState, normalizeForm } from '../data/onboardingSchema'
+import { stripHtml } from '../utils/stringUtils'
 
 function draftKey(userId) {
   return `tarot_onboarding_draft_${userId}`
@@ -83,13 +84,6 @@ function emptyJournalDraft(userId) {
     createdAt: now,
     updatedAt: now,
   }
-}
-
-function stripHtml(html) {
-  return String(html ?? '')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .trim()
 }
 
 export function isRichTextEmpty(html) {

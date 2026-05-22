@@ -9,7 +9,7 @@ import VerifyOtp from './pages/VerifyOtp'
 import Onboarding from './pages/Onboarding'
 import { AuthSessionProvider } from './hooks/useAuthSession.jsx'
 import { useAuthSession } from './hooks/useAuthSession.js'
-import { useOnboardingStorage } from './hooks/useJournalStorage.js'
+import { useOnboardingStorage } from './hooks/useOnboardingStorage.js'
 
 // Redirects authenticated users who haven't completed onboarding to /onboarding.
 function OnboardingGate({ children }) {

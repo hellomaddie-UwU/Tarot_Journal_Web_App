@@ -17,6 +17,13 @@ function readEntries(userId) {
   }
 }
 
+function readCatalogueState(userId) {
+  return {
+    uid: userId,
+    ...readEntries(userId),
+  }
+}
+
 function formatSavedDate(isoString) {
   if (!isoString) return 'Recently saved'
 
@@ -48,19 +55,21 @@ function previewFromEntry(entry, maxLength = 220) {
 function Catalogue() {
   const { user, isLoading } = useAuthSession()
   const [deleteMessage, setDeleteMessage] = useState('')
-  const [revision, setRevision] = useState(0)
+  const [catalogueState, setCatalogueState] = useState(() => readCatalogueState(user?.id))
 
-  const { entries, warning } = useMemo(() => {
-    void revision
-    const result = readEntries(user?.id)
-    const sorted = [...result.entries].sort((a, b) => {
+  if (catalogueState.uid !== user?.id) {
+    setCatalogueState(readCatalogueState(user?.id))
+  }
+
+  const entries = useMemo(() => {
+    return [...catalogueState.entries].sort((a, b) => {
       const aDate = new Date(a?.savedAt ?? a?.updatedAt ?? a?.createdAt ?? 0).getTime()
       const bDate = new Date(b?.savedAt ?? b?.updatedAt ?? b?.createdAt ?? 0).getTime()
       return bDate - aDate
     })
+  }, [catalogueState.entries])
 
-    return { entries: sorted, warning: result.warning }
-  }, [revision, user?.id])
+  const warning = catalogueState.warning
 
   const hasEntries = entries.length > 0
 
@@ -78,7 +87,7 @@ function Catalogue() {
     }
 
     setDeleteMessage('Entry deleted.')
-    setRevision((current) => current + 1)
+    setCatalogueState((prev) => ({ ...prev, entries: result.entries }))
   }
 
   if (isLoading) return null

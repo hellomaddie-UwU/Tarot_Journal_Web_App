@@ -4,23 +4,10 @@ import { useAuthSession } from '../hooks/useAuthSession'
 import { deleteJournalEntry, readJournalEntries } from '../hooks/useJournalStorage'
 import { stripHtml } from '../utils/stringUtils'
 
-function readEntries(userId) {
-  if (!userId) return { entries: [], warning: '' }
-
-  try {
-    return { entries: readJournalEntries(userId), warning: '' }
-  } catch {
-    return {
-      entries: [],
-      warning: 'Saved entries could not be read from this browser storage right now.',
-    }
-  }
-}
-
 function readCatalogueState(userId) {
   return {
     uid: userId,
-    ...readEntries(userId),
+    entries: userId ? readJournalEntries(userId) : [],
   }
 }
 
@@ -68,8 +55,6 @@ function Catalogue() {
       return bDate - aDate
     })
   }, [catalogueState.entries])
-
-  const warning = catalogueState.warning
 
   const hasEntries = entries.length > 0
 
@@ -126,15 +111,6 @@ function Catalogue() {
                 Create new entry
               </Link>
             </header>
-
-            {warning ? (
-              <div className="alert-ds alert-warning" role="alert">
-                <div>
-                  <div className="alert-ds-title">Storage notice</div>
-                  <p className="mb-0">{warning}</p>
-                </div>
-              </div>
-            ) : null}
 
             {deleteMessage ? (
               <div className="alert-ds alert-success" role="status">

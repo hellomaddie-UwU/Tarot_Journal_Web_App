@@ -12,7 +12,6 @@
 .form-hint { 
    font-size: var(--text-xs); 
    color: var(--color-text-muted); 
-   margin-top: var(--space-1); 
 }
 .form-error-msg { 
    font-size: var(--text-xs); 
@@ -74,7 +73,6 @@ select.input-ds {
    border-radius: var(--radius-sm); 
    background: var(--color-surface); 
    cursor: pointer; 
-   flex-shrink: 0; 
    transition: var(--ease-base); 
    position: relative; 
 }
@@ -478,7 +476,7 @@ select.input-ds {
 .tooltip-bottom:hover .tooltip-ds { transform: translateX(-50%) translateY(0); }
 
 /* ─────────────────────────────────────────
-    15. JOURNAL EDITOR (RTE)
+   17. JOURNAL EDITOR (RTE)
 ───────────────────────────────────────── */
 .rte-ds {
    border: 1.5px solid var(--color-border);
@@ -540,7 +538,7 @@ select.input-ds {
 }
 
 /* ─────────────────────────────────────────
-   17. PROGRESS & STEP INDICATORS
+   18. PROGRESS & STEP INDICATORS
 ───────────────────────────────────────── */
 .progress-ds-wrap { 
    display: flex; 
@@ -627,7 +625,7 @@ select.input-ds {
 .step-ds.complete .step-label { color: var(--color-text-primary); }
 
 /* ─────────────────────────────────────────
-   18. CATALOGUE ENTRIES
+   19. CATALOGUE ENTRIES
 ───────────────────────────────────────── */
 .catalogue-list {
    display: flex;
@@ -651,6 +649,7 @@ select.input-ds {
    color: var(--color-text-primary);
    line-height: var(--lh-normal);
    display: -webkit-box;
+   line-clamp: 4;
    -webkit-line-clamp: 4;
    -webkit-box-orient: vertical;
    overflow: hidden;
@@ -667,6 +666,7 @@ select.input-ds {
 
 @media (max-width: 767px) {
    .catalogue-preview {
+      line-clamp: 6;
       -webkit-line-clamp: 6;
    }
 }

@@ -1,10 +1,51 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthSession } from '../hooks/useAuthSession'
+import { readJson, writeJson } from '../lib/storageUtils'
 import { resendConfirmationEmail, verifyEmailOtp } from '../lib/supabaseClient'
 
 const OTP_MIN_LENGTH = 6
 const OTP_MAX_LENGTH = 8
+const RESEND_COOLDOWN_SECONDS = 60
+
+function cooldownStorageKey(emailAddress) {
+  const normalizedEmail = emailAddress.trim().toLowerCase()
+  return `tarot_verify_otp_resend_cooldown_${encodeURIComponent(normalizedEmail)}`
+}
+
+function readCooldownExpiry(emailAddress) {
+  if (!emailAddress) return null
+
+  const expiresAt = readJson(cooldownStorageKey(emailAddress))
+
+  if (typeof expiresAt !== 'number' || Number.isNaN(expiresAt)) {
+    localStorage.removeItem(cooldownStorageKey(emailAddress))
+    return null
+  }
+
+  if (expiresAt <= Date.now()) {
+    localStorage.removeItem(cooldownStorageKey(emailAddress))
+    return null
+  }
+
+  return expiresAt
+}
+
+function formatCooldown(seconds) {
+  const safeSeconds = Math.max(0, seconds)
+  const minutes = Math.floor(safeSeconds / 60)
+  const remainingSeconds = safeSeconds % 60
+  return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`
+}
+
+function extractRetryAfterSeconds(message) {
+  if (typeof message !== 'string') return null
+  const match = message.match(/after\s+(\d+)\s+seconds?/i)
+  if (!match) return null
+
+  const parsed = Number(match[1])
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
 
 function VerifyOtp() {
   const { isConfigured } = useAuthSession()
@@ -19,12 +60,68 @@ function VerifyOtp() {
   const [feedbackType, setFeedbackType] = useState('info') // 'info' | 'danger' | 'success'
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isResending, setIsResending] = useState(false)
+  const [cooldownEmailKey, setCooldownEmailKey] = useState(() => (email ? cooldownStorageKey(email) : ''))
+  const [cooldownExpiryMs, setCooldownExpiryMs] = useState(() => readCooldownExpiry(email))
+  const [remainingCooldownSeconds, setRemainingCooldownSeconds] = useState(() => {
+    const expiresAt = readCooldownExpiry(email)
+    if (!expiresAt) return 0
+    return Math.ceil((expiresAt - Date.now()) / 1000)
+  })
+
+  const emailKey = email ? cooldownStorageKey(email) : ''
+
+  if (cooldownEmailKey !== emailKey) {
+    const expiresAt = readCooldownExpiry(email)
+    setCooldownEmailKey(emailKey)
+    setCooldownExpiryMs(expiresAt)
+    setRemainingCooldownSeconds(expiresAt ? Math.ceil((expiresAt - Date.now()) / 1000) : 0)
+  }
+
+  useEffect(() => {
+    if (!cooldownExpiryMs || !email) {
+      setRemainingCooldownSeconds(0)
+      return undefined
+    }
+
+    const updateRemaining = () => {
+      const remaining = Math.max(0, Math.ceil((cooldownExpiryMs - Date.now()) / 1000))
+      setRemainingCooldownSeconds(remaining)
+
+      if (remaining === 0) {
+        localStorage.removeItem(cooldownStorageKey(email))
+        setCooldownExpiryMs(null)
+      }
+    }
+
+    updateRemaining()
+    const intervalId = window.setInterval(updateRemaining, 1000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [cooldownExpiryMs, email])
 
   const isComplete = otp.length >= OTP_MIN_LENGTH
+  const isCooldownActive = remainingCooldownSeconds > 0
+  const resendLabel = isResending
+    ? 'Sending…'
+    : isCooldownActive
+      ? `Resend in ${formatCooldown(remainingCooldownSeconds)}`
+      : 'Resend code'
 
   const setAlert = (message, type = 'info') => {
     setFeedback(message)
     setFeedbackType(type)
+  }
+
+  const startResendCooldown = (seconds = RESEND_COOLDOWN_SECONDS) => {
+    if (!email) return
+
+    const safeSeconds = Math.max(1, Math.ceil(seconds))
+    const expiresAt = Date.now() + (safeSeconds * 1000)
+    writeJson(cooldownStorageKey(email), expiresAt)
+    setCooldownExpiryMs(expiresAt)
+    setRemainingCooldownSeconds(safeSeconds)
   }
 
   const verifyOtpToken = async (token) => {
@@ -76,10 +173,11 @@ function VerifyOtp() {
   }
 
   const handleResend = async () => {
-    if (!email) return
+    if (!email || isCooldownActive) return
 
     setIsResending(true)
     setFeedback('')
+    startResendCooldown()
 
     try {
       const { error } = await resendConfirmationEmail({ email })
@@ -90,6 +188,10 @@ function VerifyOtp() {
 
       setAlert('A new code has been sent to your inbox.', 'info')
     } catch (error) {
+      const retryAfterSeconds = extractRetryAfterSeconds(error?.message)
+      if (retryAfterSeconds) {
+        startResendCooldown(retryAfterSeconds)
+      }
       setAlert(error.message ?? 'Could not resend the code. Please try again.', 'danger')
     } finally {
       setIsResending(false)
@@ -172,18 +274,18 @@ function VerifyOtp() {
                       <div className="d-flex flex-wrap gap-2 align-items-center">
                         <button
                           type="submit"
-                          className="btn btn-primary"
+                          className="btn btn-primary-ds"
                           disabled={!isConfigured || !email || !isComplete || isSubmitting}
                         >
                           {isSubmitting ? 'Verifying…' : 'Verify email'}
                         </button>
                         <button
                           type="button"
-                          className="btn btn-outline-secondary"
-                          disabled={!isConfigured || !email || isResending || isSubmitting}
+                          className="btn btn-secondary-ds"
+                          disabled={!isConfigured || !email || isResending || isSubmitting || isCooldownActive}
                           onClick={handleResend}
                         >
-                          {isResending ? 'Sending…' : 'Resend code'}
+                          {resendLabel}
                         </button>
                       </div>
 

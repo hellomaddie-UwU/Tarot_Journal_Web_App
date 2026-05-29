@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { readJson, writeJson } from '../lib/storageUtils'
-import { stripHtml } from '../utils/stringUtils'
+import { hasInlineImage, stripHtml } from '../utils/stringUtils'
 
 function journalDraftKey(userId) {
   return `tarot_journal_draft_${userId}`
@@ -60,7 +60,7 @@ function emptyJournalDraft(userId) {
 }
 
 export function isRichTextEmpty(html) {
-  return stripHtml(html).length === 0
+  return stripHtml(html).length === 0 && !hasInlineImage(html)
 }
 
 export function useJournalStorage(userId, entryId = null) {

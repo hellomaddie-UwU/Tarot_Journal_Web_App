@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthSession } from '../hooks/useAuthSession'
 import { deleteJournalEntry, readJournalEntries } from '../hooks/useJournalStorage'
-import { stripHtml } from '../utils/stringUtils'
+import { firstInlineImageName, stripHtml } from '../utils/stringUtils'
 
 function readCatalogueState(userId) {
   return {
@@ -33,6 +33,9 @@ function titleFromEntry(entry) {
 }
 
 function previewFromEntry(entry, maxLength = 220) {
+  const imageName = firstInlineImageName(entry?.bodyHtml)
+  if (imageName) return imageName
+
   const text = stripHtml(entry?.bodyHtml)
   if (!text) return 'No reflection text saved yet.'
   if (text.length <= maxLength) return text

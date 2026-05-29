@@ -517,6 +517,11 @@ select.input-ds {
    padding: 0.85rem 1rem;
 }
 
+.rte-ds .ql-editor img {
+   max-width: 100%;
+   height: auto;
+}
+
 .rte-ds .ql-editor.ql-blank::before {
    color: var(--color-text-muted);
    font-style: normal;

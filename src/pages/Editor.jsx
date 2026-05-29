@@ -1,10 +1,19 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import ReactQuill from 'react-quill-new'
+import ReactQuill, { Quill } from 'react-quill-new'
 import 'react-quill-new/dist/quill.snow.css'
+import QuillResize from 'quill-resize-module'
+import 'quill-resize-module/dist/resize.css'
 import writingPrompts from '../data/writingPrompts'
 import { useAuthSession } from '../hooks/useAuthSession'
 import { isRichTextEmpty, useJournalStorage } from '../hooks/useJournalStorage'
+
+let isResizeModuleRegistered = false
+
+if (!isResizeModuleRegistered) {
+  Quill.register('modules/resize', QuillResize)
+  isResizeModuleRegistered = true
+}
 
 function randomPrompt() {
   if (writingPrompts.length === 0) return ''
@@ -24,9 +33,30 @@ function formatSavedTime(isoString) {
   }
 }
 
+function isImageFile(file) {
+  return Boolean(file?.type && file.type.startsWith('image/'))
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : ''
+      resolve(result)
+    }
+    reader.onerror = () => reject(new Error('Image upload failed. Please try another image.'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function cleanImageFileName(file) {
+  return String(file?.name ?? '').trim() || 'Uploaded image'
+}
+
 function Editor() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const quillRef = useRef(null)
   const { user, isLoading } = useAuthSession()
   const entryId = searchParams.get('entryId')
   const {
@@ -39,21 +69,88 @@ function Editor() {
   } = useJournalStorage(user?.id, entryId)
 
   const [formError, setFormError] = useState('')
-  const [imageError, setImageError] = useState('')
+  const [featuredImageError, setFeaturedImageError] = useState('')
+  const [inlineImageError, setInlineImageError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+
+  const insertInlineImage = useCallback(async (file) => {
+    if (!isImageFile(file)) {
+      setInlineImageError('Please upload a valid image file.')
+      return
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+
+      if (!dataUrl) {
+        setInlineImageError('Image upload failed. Please try another image.')
+        return
+      }
+
+      const quillEditor = quillRef.current?.getEditor()
+      if (!quillEditor) {
+        setInlineImageError('Editor is not ready yet. Please try again.')
+        return
+      }
+
+      const range = quillEditor.getSelection(true)
+      const insertIndex = range?.index ?? quillEditor.getLength()
+      const imageFileName = cleanImageFileName(file)
+
+      quillEditor.insertEmbed(insertIndex, 'image', dataUrl, 'user')
+      const [leaf] = quillEditor.getLeaf(insertIndex)
+      if (leaf?.domNode instanceof HTMLImageElement) {
+        leaf.domNode.setAttribute('alt', imageFileName)
+      }
+      quillEditor.setSelection(insertIndex + 1, 0, 'silent')
+      setInlineImageError('')
+    } catch {
+      setInlineImageError('Image upload failed. Please try another image.')
+    }
+  }, [])
+
+  const handleInlineImageUpload = useCallback(() => {
+    const input = document.createElement('input')
+    input.setAttribute('type', 'file')
+    input.setAttribute('accept', 'image/*')
+    input.click()
+
+    input.addEventListener('change', () => {
+      const file = input.files?.[0]
+      if (!file) return
+      void insertInlineImage(file)
+    })
+  }, [insertInlineImage])
 
   const quillModules = useMemo(
     () => ({
-      toolbar: [
-        [{ header: [1, 2, false] }],
-        ['bold', 'italic', 'underline'],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        ['blockquote', 'link'],
-        [{ color: [] }, { align: [] }],
-        ['clean'],
-      ],
+      toolbar: {
+        container: [
+          [{ header: [1, 2, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['blockquote', 'link', 'image'],
+          [{ color: [] }, { align: [] }],
+          ['clean'],
+        ],
+        handlers: {
+          image: handleInlineImageUpload,
+        },
+      },
+      resize: {
+        modules: ['Resize', 'DisplaySize'],
+        parchment: {
+          image: {
+            attribute: ['width'],
+            limit: {
+              minWidth: 80,
+              maxWidth: 1200,
+            },
+          },
+        },
+      },
     }),
-    [],
+    [handleInlineImageUpload],
   )
 
   const quillFormats = useMemo(
@@ -66,11 +163,69 @@ function Editor() {
       'bullet',
       'blockquote',
       'link',
+      'image',
       'color',
       'align',
+      'width',
     ],
     [],
   )
+
+  useEffect(() => {
+    const quillEditor = quillRef.current?.getEditor()
+    if (!quillEditor) return undefined
+
+    const editorRoot = quillEditor.root
+
+    const handleDragOver = (event) => {
+      if (event.dataTransfer?.types?.includes('Files')) {
+        event.preventDefault()
+      }
+    }
+
+    const handleDrop = (event) => {
+      const droppedFiles = Array.from(event.dataTransfer?.files ?? [])
+      if (droppedFiles.length === 0) return
+
+      const file = droppedFiles.find(isImageFile)
+      if (!file) {
+        event.preventDefault()
+        setInlineImageError('Please upload a valid image file.')
+        return
+      }
+
+      event.preventDefault()
+      quillEditor.focus()
+      void insertInlineImage(file)
+    }
+
+    const handlePaste = (event) => {
+      const items = Array.from(event.clipboardData?.items ?? [])
+      const hasFileItem = items.some((item) => item.kind === 'file')
+      const imageItem = items.find((item) => item.kind === 'file' && item.type.startsWith('image/'))
+      const file = imageItem?.getAsFile()
+      if (!file) {
+        if (hasFileItem) {
+          event.preventDefault()
+          setInlineImageError('Please upload a valid image file.')
+        }
+        return
+      }
+
+      event.preventDefault()
+      void insertInlineImage(file)
+    }
+
+    editorRoot.addEventListener('dragover', handleDragOver)
+    editorRoot.addEventListener('drop', handleDrop)
+    editorRoot.addEventListener('paste', handlePaste)
+
+    return () => {
+      editorRoot.removeEventListener('dragover', handleDragOver)
+      editorRoot.removeEventListener('drop', handleDrop)
+      editorRoot.removeEventListener('paste', handlePaste)
+    }
+  }, [insertInlineImage])
 
   if (isLoading) {
     return null
@@ -113,24 +268,38 @@ function Editor() {
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith('image/')) {
-      setImageError('Please upload a valid image file.')
+    if (!isImageFile(file)) {
+      setFeaturedImageError('Please upload a valid image file.')
       event.target.value = ''
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : ''
-      handleFieldChange('featuredImageDataUrl', result)
-      setImageError('')
-      event.target.value = ''
+    readFileAsDataUrl(file)
+      .then((result) => {
+        handleFieldChange('featuredImageDataUrl', result)
+        setFeaturedImageError('')
+        event.target.value = ''
+      })
+      .catch(() => {
+        setFeaturedImageError('Image upload failed. Please try another image.')
+        event.target.value = ''
+      })
+  }
+
+  const clearFeaturedImage = () => {
+    handleFieldChange('featuredImageDataUrl', '')
+    setFeaturedImageError('')
+  }
+
+  const clearInlineImageError = () => {
+    setInlineImageError('')
+  }
+
+  const handleEditorChange = (value) => {
+    if (inlineImageError) {
+      clearInlineImageError()
     }
-    reader.onerror = () => {
-      setImageError('Image upload failed. Please try another image.')
-      event.target.value = ''
-    }
-    reader.readAsDataURL(file)
+    handleFieldChange('bodyHtml', value)
   }
 
   const handleSave = (event) => {
@@ -239,15 +408,17 @@ function Editor() {
                     <label className="form-label-ds" htmlFor="journalBody">Journal content</label>
                     <div className={`rte-ds${formError && isRichTextEmpty(draft.bodyHtml) ? ' error' : ''}`} id="journalBody">
                       <ReactQuill
+                        ref={quillRef}
                         theme="snow"
                         value={draft.bodyHtml}
-                        onChange={(value) => handleFieldChange('bodyHtml', value)}
+                        onChange={handleEditorChange}
                         modules={quillModules}
                         formats={quillFormats}
                         placeholder="Begin your reflection..."
                       />
                     </div>
                     <span className="form-hint">Rich text is enabled. This field is required.</span>
+                    {inlineImageError ? <span className="form-error-msg">{inlineImageError}</span> : null}
                   </section>
 
                   <section className="d-flex flex-column gap-2">
@@ -259,7 +430,7 @@ function Editor() {
                       accept="image/*"
                       onChange={handleImageUpload}
                     />
-                    {imageError ? <span className="form-error-msg">{imageError}</span> : null}
+                    {featuredImageError ? <span className="form-error-msg">{featuredImageError}</span> : null}
 
                     {draft.featuredImageDataUrl ? (
                       <div className="journal-image-panel">
@@ -272,7 +443,7 @@ function Editor() {
                           <button
                             type="button"
                             className="btn btn-ghost-ds btn-sm-ds"
-                            onClick={() => handleFieldChange('featuredImageDataUrl', '')}
+                            onClick={clearFeaturedImage}
                           >
                             Remove image
                           </button>

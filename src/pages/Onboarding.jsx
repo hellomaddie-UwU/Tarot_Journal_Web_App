@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useOnboardingStorage } from '../hooks/useJournalStorage'
+import { useOnboardingStorage } from '../hooks/useOnboardingStorage'
 import { useAuthSession } from '../hooks/useAuthSession'
 import {
   FIELD,

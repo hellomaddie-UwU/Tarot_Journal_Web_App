@@ -211,6 +211,16 @@ code, .inline-code {
    font-size: var(--text-md); 
 }
 
+.btn:disabled {
+   background: var(--color-code-bg);
+   color: var(--color-text-muted);
+   border-color: var(--color-border);
+   cursor: not-allowed;
+   box-shadow: none;
+   opacity: 0.75;
+   transform: none;
+}
+
 /* ─────────────────────────────────────────
    5. DIVIDERS
 ───────────────────────────────────────── */

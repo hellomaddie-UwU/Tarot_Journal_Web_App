@@ -2,18 +2,12 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthSession } from '../hooks/useAuthSession'
 import { deleteJournalEntry, readJournalEntries } from '../hooks/useJournalStorage'
-import { stripHtml } from '../utils/stringUtils'
+import { firstInlineImageName, stripHtml } from '../utils/stringUtils'
 
-function readEntries(userId) {
-  if (!userId) return { entries: [], warning: '' }
-
-  try {
-    return { entries: readJournalEntries(userId), warning: '' }
-  } catch {
-    return {
-      entries: [],
-      warning: 'Saved entries could not be read from this browser storage right now.',
-    }
+function readCatalogueState(userId) {
+  return {
+    uid: userId,
+    entries: userId ? readJournalEntries(userId) : [],
   }
 }
 
@@ -39,6 +33,9 @@ function titleFromEntry(entry) {
 }
 
 function previewFromEntry(entry, maxLength = 220) {
+  const imageName = firstInlineImageName(entry?.bodyHtml)
+  if (imageName) return imageName
+
   const text = stripHtml(entry?.bodyHtml)
   if (!text) return 'No reflection text saved yet.'
   if (text.length <= maxLength) return text
@@ -48,19 +45,19 @@ function previewFromEntry(entry, maxLength = 220) {
 function Catalogue() {
   const { user, isLoading } = useAuthSession()
   const [deleteMessage, setDeleteMessage] = useState('')
-  const [revision, setRevision] = useState(0)
+  const [catalogueState, setCatalogueState] = useState(() => readCatalogueState(user?.id))
 
-  const { entries, warning } = useMemo(() => {
-    void revision
-    const result = readEntries(user?.id)
-    const sorted = [...result.entries].sort((a, b) => {
+  if (catalogueState.uid !== user?.id) {
+    setCatalogueState(readCatalogueState(user?.id))
+  }
+
+  const entries = useMemo(() => {
+    return [...catalogueState.entries].sort((a, b) => {
       const aDate = new Date(a?.savedAt ?? a?.updatedAt ?? a?.createdAt ?? 0).getTime()
       const bDate = new Date(b?.savedAt ?? b?.updatedAt ?? b?.createdAt ?? 0).getTime()
       return bDate - aDate
     })
-
-    return { entries: sorted, warning: result.warning }
-  }, [revision, user?.id])
+  }, [catalogueState.entries])
 
   const hasEntries = entries.length > 0
 
@@ -78,7 +75,7 @@ function Catalogue() {
     }
 
     setDeleteMessage('Entry deleted.')
-    setRevision((current) => current + 1)
+    setCatalogueState((prev) => ({ ...prev, entries: result.entries }))
   }
 
   if (isLoading) return null
@@ -117,15 +114,6 @@ function Catalogue() {
                 Create new entry
               </Link>
             </header>
-
-            {warning ? (
-              <div className="alert-ds alert-warning" role="alert">
-                <div>
-                  <div className="alert-ds-title">Storage notice</div>
-                  <p className="mb-0">{warning}</p>
-                </div>
-              </div>
-            ) : null}
 
             {deleteMessage ? (
               <div className="alert-ds alert-success" role="status">

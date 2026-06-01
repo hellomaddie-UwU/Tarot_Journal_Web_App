@@ -8,11 +8,19 @@ import writingPrompts from '../data/writingPrompts'
 import { useAuthSession } from '../hooks/useAuthSession'
 import { isRichTextEmpty, useJournalStorage } from '../hooks/useJournalStorage'
 
-let isResizeModuleRegistered = false
+const MAX_INLINE_IMAGE_BYTES = 750_000
+const MAX_FEATURED_IMAGE_BYTES = 1_500_000
 
-if (!isResizeModuleRegistered) {
-  Quill.register('modules/resize', QuillResize)
-  isResizeModuleRegistered = true
+Quill.register('modules/resize', QuillResize)
+
+function imageLimitText(maxBytes) {
+  const mb = maxBytes / (1024 * 1024)
+  return `${mb.toFixed(1)} MB`
+}
+
+function isImageWithinSize(file, maxBytes) {
+  if (!file) return false
+  return file.size <= maxBytes
 }
 
 function randomPrompt() {
@@ -76,6 +84,11 @@ function Editor() {
   const insertInlineImage = useCallback(async (file) => {
     if (!isImageFile(file)) {
       setInlineImageError('Please upload a valid image file.')
+      return
+    }
+
+    if (!isImageWithinSize(file, MAX_INLINE_IMAGE_BYTES)) {
+      setInlineImageError(`Inline images must be ${imageLimitText(MAX_INLINE_IMAGE_BYTES)} or smaller.`)
       return
     }
 
@@ -274,6 +287,12 @@ function Editor() {
       return
     }
 
+    if (!isImageWithinSize(file, MAX_FEATURED_IMAGE_BYTES)) {
+      setFeaturedImageError(`Featured images must be ${imageLimitText(MAX_FEATURED_IMAGE_BYTES)} or smaller.`)
+      event.target.value = ''
+      return
+    }
+
     readFileAsDataUrl(file)
       .then((result) => {
         handleFieldChange('featuredImageDataUrl', result)
@@ -417,7 +436,9 @@ function Editor() {
                         placeholder="Begin your reflection..."
                       />
                     </div>
-                    <span className="form-hint">Rich text is enabled. This field is required.</span>
+                    <span className="form-hint">
+                      Rich text is enabled. This field is required. Inline images must be {imageLimitText(MAX_INLINE_IMAGE_BYTES)} or smaller.
+                    </span>
                     {inlineImageError ? <span className="form-error-msg">{inlineImageError}</span> : null}
                   </section>
 
@@ -430,6 +451,7 @@ function Editor() {
                       accept="image/*"
                       onChange={handleImageUpload}
                     />
+                    <span className="form-hint">Featured images must be {imageLimitText(MAX_FEATURED_IMAGE_BYTES)} or smaller.</span>
                     {featuredImageError ? <span className="form-error-msg">{featuredImageError}</span> : null}
 
                     {draft.featuredImageDataUrl ? (
